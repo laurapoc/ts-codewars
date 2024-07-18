@@ -10,12 +10,13 @@ const keyValuesByNUmbers: Record<string, string[]> = {
   "7": ["p", "q", "r", "s"],
   "8": ["t", "u", "v"],
   "9": ["w", "x", "y", "z"],
-  "*": ["-", "+", "="],
+  "*": ["'", "-", "+", "="],
   "0": [" "],
   "#": [],
 };
 
 const isUpperCase = (str: string) => /^[A-Z]*$/.test(str);
+const onlyAlphabetic = /^[a-zA-Z]+$/;
 
 let lastPressedButton: string = "";
 
@@ -35,21 +36,31 @@ export function sendMessage(message: string): string {
   //   map through every single letter
   messageIntoStringArray.forEach((letter: string) => {
     //   map through keyValuesByNUmbers object properties
+
     arrayOfKeyNumbers.forEach((buttonSymbol: string) => {
       const buttonSymbolPossibleValues = keyValuesByNUmbers[buttonSymbol];
 
       let position = -1;
 
       for (let i = 0; i < buttonSymbolPossibleValues.length; i++) {
-        if (buttonSymbolPossibleValues[i] === letter.toLowerCase()) {
+        if (
+          buttonSymbolPossibleValues[i] === letter.toLowerCase() ||
+          buttonSymbol === letter
+        ) {
           position = i + 1;
         }
       }
 
       if (position > -1) {
+        const charIsNumeric = buttonSymbol === letter;
+        // if uppercase and did not toggle capital, or eather way, and only alphabetic letter
         if (
-          (isUpperCase(letter) && !capitalLetterToggle) ||
-          (!isUpperCase(letter) && capitalLetterToggle)
+          (isUpperCase(letter) &&
+            !capitalLetterToggle &&
+            onlyAlphabetic.test(letter)) ||
+          (!isUpperCase(letter) &&
+            capitalLetterToggle &&
+            onlyAlphabetic.test(letter))
         ) {
           // add # if need to change to lowercase or upper case
           result =
@@ -57,9 +68,12 @@ export function sendMessage(message: string): string {
             pressTheButton("#") +
             pressTheButton(buttonSymbol, position);
           capitalLetterToggle = !capitalLetterToggle;
+        } else if (charIsNumeric) {
+          // hold the button if the character should be a number
+          result = result + `${buttonSymbol}-`;
         } else {
           if (lastPressedButton === buttonSymbol) {
-            //   add space if previous letter is on the same button and is the same case (lowercase input and lowercase character)
+            //   add space if previous character was on the same button and was the same case (lowercase or upper case)
             result = result + " " + pressTheButton(buttonSymbol, position);
           } else {
             result = result + pressTheButton(buttonSymbol, position);
@@ -77,3 +91,6 @@ console.log(sendMessage("!ABb-"));
 console.log(sendMessage("- AbbaC"));
 console.log(sendMessage("hey"));
 console.log(sendMessage("one two three"));
+console.log(sendMessage("12 hey"));
+console.log(sendMessage("Def Con 1!"));
+console.log(sendMessage("A-z"));
