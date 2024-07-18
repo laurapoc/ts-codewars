@@ -3,10 +3,26 @@
 const keyValuesByNUmbers: Record<string, string[]> = {
   "1": [".", ",", "?", "!"],
   "2": ["a", "b", "c"],
+  "3": ["d", "e", "f"],
+  "4": ["g", "h", "i"],
+  "5": ["j", "k", "l"],
+  "6": ["m", "n", "o"],
+  "7": ["p", "q", "r", "s"],
+  "8": ["t", "u", "v"],
+  "9": ["w", "x", "y", "z"],
   "*": ["-", "+", "="],
+  "0": [" "],
+  "#": [],
 };
 
 const isUpperCase = (str: string) => /^[A-Z]*$/.test(str);
+
+let lastPressedButton: string = "";
+
+const pressTheButton = (buttonName: string, position?: number): string => {
+  lastPressedButton = buttonName;
+  return position ? buttonName.repeat(position) : buttonName;
+};
 
 export function sendMessage(message: string): string {
   let result = "";
@@ -35,17 +51,29 @@ export function sendMessage(message: string): string {
           (isUpperCase(letter) && !capitalLetterToggle) ||
           (!isUpperCase(letter) && capitalLetterToggle)
         ) {
-          result = result + "#" + buttonSymbol.repeat(position);
+          // add # if need to change to lowercase or upper case
+          result =
+            result +
+            pressTheButton("#") +
+            pressTheButton(buttonSymbol, position);
           capitalLetterToggle = !capitalLetterToggle;
         } else {
-          result = result + buttonSymbol.repeat(position);
+          if (lastPressedButton === buttonSymbol) {
+            //   add space if previous letter is on the same button and is the same case (lowercase input and lowercase character)
+            result = result + " " + pressTheButton(buttonSymbol, position);
+          } else {
+            result = result + pressTheButton(buttonSymbol, position);
+          }
         }
       }
     });
   });
-
+  lastPressedButton = "";
   return result;
 }
 
 console.log(sendMessage("?-"));
 console.log(sendMessage("!ABb-"));
+console.log(sendMessage("- AbbaC"));
+console.log(sendMessage("hey"));
+console.log(sendMessage("one two three"));
