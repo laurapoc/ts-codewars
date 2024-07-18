@@ -1,6 +1,8 @@
 // link to codewars kata: https://www.codewars.com/kata/5ca24526b534ce0018a137b5/train/typescript
 
-const keyValuesByNUmbers: Record<string, string[]> = {
+import { CapitalizeLetterPropsType } from "./types";
+
+const keyValuesByNumbers: Record<string, string[]> = {
   "1": [".", ",", "?", "!"],
   "2": ["a", "b", "c"],
   "3": ["d", "e", "f"],
@@ -20,14 +22,61 @@ const onlyAlphabetic = /^[a-zA-Z]+$/;
 
 let lastPressedButton: string = "";
 
+const isLetterInPossibleValues = (possibleValues: string, letter: string) =>
+  possibleValues === letter.toLowerCase();
+
+const isCharacterANumber = (buttonSymbol: string, letter: string) =>
+  buttonSymbol === letter;
+
 const pressTheButton = (buttonName: string, position?: number): string => {
   lastPressedButton = buttonName;
   return position ? buttonName.repeat(position) : buttonName;
 };
 
+const ceckIfChangeLetterToUppercase = ({
+  letter,
+  capitalLetterToggle,
+}: CapitalizeLetterPropsType) =>
+  isUpperCase(letter) && !capitalLetterToggle && onlyAlphabetic.test(letter);
+
+const checkIfChangeLetterToLowercase = ({
+  letter,
+  capitalLetterToggle,
+}: CapitalizeLetterPropsType) =>
+  !isUpperCase(letter) && capitalLetterToggle && onlyAlphabetic.test(letter);
+
+const toggleUppercase = ({
+  letter,
+  capitalLetterToggle,
+}: CapitalizeLetterPropsType) =>
+  ceckIfChangeLetterToUppercase({ letter, capitalLetterToggle }) ||
+  checkIfChangeLetterToLowercase({ letter, capitalLetterToggle });
+
+const isLetterInArrayOrEqualToButtonSymbol = (
+  possibleValues: string,
+  letter: string,
+  buttonSymbol: string
+) =>
+  isLetterInPossibleValues(possibleValues, letter) ||
+  isCharacterANumber(buttonSymbol, letter);
+
+const generateResultWithoutSpecialLetters = (
+  pressedButtonPreciously: string,
+  buttonSymbol: string,
+  addSpace: () => void,
+  onlyPressButton: () => void
+) => {
+  if (pressedButtonPreciously === buttonSymbol) {
+    //   add space if previous character was on the same button and was the same case (lowercase or upper case)
+    addSpace();
+  } else {
+    onlyPressButton();
+  }
+};
+
 export function sendMessage(message: string): string {
   let result = "";
-  const arrayOfKeyNumbers = Object.keys(keyValuesByNUmbers);
+  const arrayOfKeyNumbers = Object.keys(keyValuesByNumbers);
 
   const messageIntoStringArray = message.split("");
 
@@ -35,32 +84,31 @@ export function sendMessage(message: string): string {
 
   //   map through every single letter
   messageIntoStringArray.forEach((letter: string) => {
-    //   map through keyValuesByNUmbers object properties
-
+    //   map through keyValuesByNumbers object properties
     arrayOfKeyNumbers.forEach((buttonSymbol: string) => {
-      const buttonSymbolPossibleValues = keyValuesByNUmbers[buttonSymbol];
+      const buttonSymbolPossibleValues = keyValuesByNumbers[buttonSymbol];
 
       let position = -1;
 
       for (let i = 0; i < buttonSymbolPossibleValues.length; i++) {
         if (
-          buttonSymbolPossibleValues[i] === letter.toLowerCase() ||
-          buttonSymbol === letter
+          isLetterInArrayOrEqualToButtonSymbol(
+            buttonSymbolPossibleValues[i],
+            letter,
+            buttonSymbol
+          )
         ) {
           position = i + 1;
         }
       }
 
       if (position > -1) {
-        const charIsNumeric = buttonSymbol === letter;
         // if uppercase and did not toggle capital, or eather way, and only alphabetic letter
         if (
-          (isUpperCase(letter) &&
-            !capitalLetterToggle &&
-            onlyAlphabetic.test(letter)) ||
-          (!isUpperCase(letter) &&
-            capitalLetterToggle &&
-            onlyAlphabetic.test(letter))
+          toggleUppercase({
+            letter,
+            capitalLetterToggle,
+          })
         ) {
           // add # if need to change to lowercase or upper case
           result =
@@ -68,16 +116,23 @@ export function sendMessage(message: string): string {
             pressTheButton("#") +
             pressTheButton(buttonSymbol, position);
           capitalLetterToggle = !capitalLetterToggle;
-        } else if (charIsNumeric) {
+        } else if (isCharacterANumber(buttonSymbol, letter)) {
           // hold the button if the character should be a number
           result = result + `${buttonSymbol}-`;
         } else {
-          if (lastPressedButton === buttonSymbol) {
-            //   add space if previous character was on the same button and was the same case (lowercase or upper case)
+          const addSpace = () => {
             result = result + " " + pressTheButton(buttonSymbol, position);
-          } else {
+          };
+          const onlyPressButton = () => {
             result = result + pressTheButton(buttonSymbol, position);
-          }
+          };
+
+          generateResultWithoutSpecialLetters(
+            lastPressedButton,
+            buttonSymbol,
+            addSpace,
+            onlyPressButton
+          );
         }
       }
     });
