@@ -38,7 +38,4 @@ export const pyramid = (n: number) => {
   return result;
 };
 
-pyramid(0);
-pyramid(1);
-pyramid(2);
-pyramid(5);
+console.log(pyramid(3));
